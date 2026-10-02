@@ -140,10 +140,16 @@ class SqliteIdentityRepository:
         self._conn.commit()
 
     def bind_card(self, card: RFIDCard) -> None:
-        """Bind an RFID card to a person."""
+        """Bind an RFID card to a person (upserting if card already exists)."""
         self._conn.execute(
-            "INSERT INTO rfid_cards (rfid_uid, person_id, status, enrolled_at) "
-            "VALUES (?, ?, ?, ?)",
+            """
+            INSERT INTO rfid_cards (rfid_uid, person_id, status, enrolled_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(rfid_uid) DO UPDATE SET
+                person_id = excluded.person_id,
+                status = excluded.status,
+                enrolled_at = excluded.enrolled_at
+            """,
             (
                 card.rfid_uid,
                 card.person_id,
