@@ -1,0 +1,71 @@
+[project]
+name = "dualkey"
+version = "0.1.0"
+description = "DualKey — Two-Factor Physical Access Control System (RFID + Face Recognition)"
+readme = "docs/README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+
+dependencies = [
+    "opencv-contrib-python>=5.0.0,<6.0.0",
+    "pyserial>=3.5,<4.0",
+    "numpy>=2.0.0,<3.0.0",
+    "onnxruntime>=1.18.0,<2.0.0",
+    "pyyaml>=6.0,<7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0.0,<10.0.0",
+    "pytest-cov>=7.0.0,<8.0.0",
+    "pyright>=1.1.0,<2.0.0",
+    "ruff>=0.16.0,<1.0.0",
+]
+
+[project.scripts]
+dualkey = "app.main:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers -v"
+markers = [
+    "unit: Pure unit tests with no external dependencies",
+    "integration: Tests requiring adapters or simulated hardware",
+    "hil: Hardware-in-the-loop tests requiring physical ESP32",
+]
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "strict"
+reportMissingImports = true
+reportMissingTypeStubs = false
+reportUnusedImport = true
+reportUnusedVariable = true
+reportUnnecessaryTypeIgnoreComment = true
+reportPrivateUsage = true
+venvPath = "."
+venv = ".venv"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "RUF",  # ruff-specific rules
+]
+
+[build-system]
+requires = ["setuptools>=75.0.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]

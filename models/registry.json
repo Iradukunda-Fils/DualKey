@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0.0",
+  "active_detector": "haar_frontalface",
+  "active_recognizer": "lbph_recognizer",
+  "detectors": [
+    {
+      "model_id": "haar_frontalface",
+      "model_version": "opencv_4.x",
+      "model_format": "xml",
+      "input_size": [-1, -1],
+      "preprocessing_version": "grayscale_equalize_v1",
+      "threshold": 1.1,
+      "checksum_sha256": "bundled_with_opencv",
+      "license": "BSD-3-Clause",
+      "license_url": "https://opencv.org/license/",
+      "source": "OpenCV Project (bundled with opencv-contrib-python)",
+      "restrictions": "none",
+      "enabled": true,
+      "artifact_path": "bundled:haarcascade_frontalface_default.xml"
+    },
+    {
+      "model_id": "yunet_face_detection",
+      "model_version": "2023mar",
+      "model_format": "onnx",
+      "input_size": [320, 320],
+      "preprocessing_version": "bgr_resize_v1",
+      "threshold": 0.9,
+      "checksum_sha256": "TO_BE_COMPUTED_AFTER_DOWNLOAD",
+      "license": "MIT",
+      "license_url": "https://github.com/opencv/opencv_zoo/blob/main/models/face_detection_yunet/LICENSE",
+      "source": "OpenCV Zoo — https://github.com/opencv/opencv_zoo",
+      "restrictions": "none",
+      "enabled": false,
+      "artifact_path": "models/yunet/face_detection_yunet_2023mar.onnx"
+    }
+  ],
+  "recognizers": [
+    {
+      "model_id": "lbph_recognizer",
+      "model_version": "1.0.0",
+      "model_format": "yml",
+      "input_size": [100, 100],
+      "preprocessing_version": "grayscale_equalize_100x100_v1",
+      "threshold": 65.0,
+      "checksum_sha256": "computed_at_training_time",
+      "license": "BSD-3-Clause",
+      "license_url": "https://opencv.org/license/",
+      "source": "OpenCV Project (cv2.face.LBPHFaceRecognizer)",
+      "restrictions": "none",
+      "enabled": true,
+      "artifact_path": "data/models/lbph.yml"
+    },
+    {
+      "model_id": "sface_recognizer",
+      "model_version": "2021dec",
+      "model_format": "onnx",
+      "input_size": [112, 112],
+      "preprocessing_version": "aligned_bgr_112x112_v1",
+      "threshold": 0.363,
+      "checksum_sha256": "TO_BE_COMPUTED_AFTER_DOWNLOAD",
+      "license": "Apache-2.0",
+      "license_url": "https://github.com/opencv/opencv_zoo/blob/main/models/face_recognition_sface/LICENSE",
+      "source": "OpenCV Zoo — https://github.com/opencv/opencv_zoo",
+      "restrictions": "none",
+      "enabled": false,
+      "artifact_path": "models/sface/face_recognition_sface_2021dec.onnx"
+    }
+  ]
+}

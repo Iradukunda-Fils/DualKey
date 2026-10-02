@@ -1,0 +1,52 @@
+# ==============================================================================
+# DualKey — .gitignore
+# ==============================================================================
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Runtime data artifacts (local-only, never committed)
+data/app.db
+data/app.db-wal
+data/app.db-shm
+data/faces/
+data/models/*.yml
+data/models/*.xml
+data/models/sface_prototypes.json
+data/logs/
+
+# Downloaded model weights (tracked in models/registry.json, not in git)
+models/yunet/*.onnx
+models/sface/*.onnx
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Coverage and testing
+htmlcov/
+.coverage
+.pytest_cache/
+.mypy_cache/
+
+# PlatformIO firmware build artifacts
+firmware/.pio/
+firmware/.vscode/
