@@ -62,6 +62,7 @@ void sendEventId(const String& uid);
 void setup() {
     Serial.begin(SERIAL_BAUD);
     while (!Serial) { delay(10); }
+    Serial.setTimeout(20);
 
     initHardware();
 
@@ -70,15 +71,12 @@ void setup() {
     clearIndicators();
     g_state = DeviceState::CLOSED_SAFE;
 
-    // Self-test: verify MFRC522 is responding
+    // Initialize MFRC522 RFID Reader with maximum antenna sensitivity
     SPI.begin(RFID_SCK_PIN, RFID_MISO_PIN, RFID_MOSI_PIN, RFID_CS_PIN);
     g_rfid.PCD_Init();
-
-    if (g_rfid.PCD_PerformSelfTest()) {
-        g_rfid.PCD_Init();  // Re-init after self-test
-        g_state = DeviceState::IDLE;
-    }
-    // If self-test fails, stay in CLOSED_SAFE (fail-closed)
+    delay(20);
+    g_rfid.PCD_SetAntennaGain(g_rfid.RxGain_max);
+    g_state = DeviceState::IDLE;
 }
 
 // ── Main Loop ───────────────────────────────────────────────────────
@@ -218,6 +216,13 @@ void pollRfid() {
     // Generate unique event ID
     g_eventCounter++;
     String eventId = String("rfid-") + String(g_eventCounter);
+
+    // Instant hardware feedback on card touch
+    digitalWrite(GREEN_LED_PIN, HIGH);
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(40);
+    digitalWrite(BUZZER_PIN, LOW);
+    digitalWrite(GREEN_LED_PIN, LOW);
 
     sendRfidDetected(uid, eventId);
 
