@@ -42,8 +42,8 @@ class OpenCVCameraAdapter:
         for idx in candidate_indices:
             cap = cv2.VideoCapture(idx)
             if cap.isOpened():
-                ret, frame = cap.read()
-                if ret and frame is not None:
+                ret, _ = cap.read()
+                if ret:
                     self._capture = cap
                     self._camera_index = idx
                     logger.info("Camera opened: index=%d", self._camera_index)

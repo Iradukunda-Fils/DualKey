@@ -209,12 +209,33 @@ def _run_enrollment(config: SystemConfig, args: argparse.Namespace) -> None:
     from app.adapters.opencv_camera import OpenCVCameraAdapter
 
     name = args.name
-    card_uid = args.card
+    card_uid: str | None = args.card
 
     if not name:
         name = input("Enter person's full name: ").strip()
     if not card_uid:
-        card_uid = input("Enter RFID card UID (hex): ").strip()
+        from app.adapters.esp32_serial import Esp32SerialAdapter
+        print("\n[INFO] Tap your RFID card on the RC522 reader now (waiting up to 15s)...")
+        try:
+            transport = Esp32SerialAdapter(port=config.serial_port, baud=config.serial_baud)
+            transport.open()
+            deadline = time.time() + 15.0
+            while time.time() < deadline:
+                events = transport.poll()
+                for ev in events:
+                    if ev.event_type == "rfid_detected" and "card_uid" in ev.payload:
+                        card_uid = str(ev.payload["card_uid"]).upper()
+                        print(f"[SUCCESS] Scanned Card UID: {card_uid}")
+                        break
+                if card_uid:
+                    break
+                time.sleep(0.05)
+            transport.close()
+        except Exception as e:
+            logger.debug("Live serial card read skipped: %s", e)
+
+        if not card_uid:
+            card_uid = input("Enter RFID card UID (hex): ").strip()
 
     if not name or not card_uid:
         logger.error("Name and card UID are required for enrollment")

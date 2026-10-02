@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 import uuid
 from typing import Any, cast
 
@@ -60,6 +61,9 @@ class Esp32SerialAdapter:
                 timeout=self._timeout,
             )
             self._port = resolved_port
+            time.sleep(0.05)
+            self._serial.reset_input_buffer()
+            self._serial.reset_output_buffer()
             logger.info("Serial connection opened: %s @ %d baud", self._port, self._baud)
         except (serial.SerialException, FileNotFoundError) as err:
             logger.warning(
@@ -75,6 +79,9 @@ class Esp32SerialAdapter:
                     timeout=self._timeout,
                 )
                 self._port = fallback_port
+                time.sleep(0.05)
+                self._serial.reset_input_buffer()
+                self._serial.reset_output_buffer()
                 logger.info(
                     "Auto-discovered serial connection opened: %s @ %d baud",
                     self._port,
@@ -200,7 +207,7 @@ class Esp32SerialAdapter:
         try:
             parsed: object = json.loads(line)
         except (json.JSONDecodeError, TypeError):
-            logger.warning("Malformed JSON discarded: %s", line[:80])
+            logger.debug("Malformed JSON discarded: %s", line[:80])
             return None
 
         if not isinstance(parsed, dict):

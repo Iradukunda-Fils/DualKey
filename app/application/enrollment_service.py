@@ -154,18 +154,20 @@ class EnrollmentService:
         """
         crops: list[NDArray[np.uint8]] = []
         attempts = 0
-        max_attempts = num_samples * 5  # Allow 5x attempts for quality filtering
+        max_attempts = max(num_samples * 25, 500)
 
         while len(crops) < num_samples and attempts < max_attempts:
             attempts += 1
             frame = self._camera.read()
             if frame is None:
+                time.sleep(0.02)
                 continue
 
             faces = self._detector.detect(frame)
 
             if len(faces) != 1:
                 # Reject: zero or multiple faces
+                time.sleep(0.02)
                 continue
 
             # Crop the single detected face
@@ -188,14 +190,15 @@ class EnrollmentService:
             filepath = save_dir / filename
             cv2.imwrite(str(filepath), crop)
 
-            # Record sample metadata (not persisted to DB yet for simplicity)
-            sample = FaceSample(
+            # Record sample metadata
+            _ = FaceSample(
                 sample_id=str(uuid.uuid4()),
                 person_id=person_id,
                 file_path=str(filepath),
                 captured_at=time.time(),
             )
-            logger.debug("Captured sample %d/%d: %s", len(crops), num_samples, sample.file_path)
+            logger.info("Captured face sample %d/%d", len(crops), num_samples)
+            time.sleep(0.08)
 
         return crops
 

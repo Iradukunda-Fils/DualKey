@@ -15,6 +15,7 @@ from __future__ import annotations
 import logging
 import uuid
 
+import cv2
 import numpy as np
 from numpy.typing import NDArray
 
@@ -101,6 +102,8 @@ class AccessController:
         self._process_device_events()
 
         if self._state == SessionState.IDLE:
+            if self._show_preview:
+                self._render_idle_preview()
             return  # Nothing to do -- waiting for RFID event
 
         if self._state == SessionState.VERIFYING:
@@ -284,6 +287,24 @@ class AccessController:
 
         banner = f"DualKey | State: {self._state.value} | Deadline: {remaining:.1f}s"
         cv2.putText(display, banner, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+        cv2.imshow("DualKey Realtime Feed", display)
+        cv2.waitKey(1)
+
+    def _render_idle_preview(self) -> None:
+        """Render real-time video feed in IDLE state with instructions."""
+        frame = self._camera.read()
+        if frame is None:
+            return
+        display = frame.copy()
+        cv2.putText(
+            display,
+            "DualKey | State: IDLE - Tap RFID Card",
+            (10, 30),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.6,
+            (0, 255, 255),
+            2,
+        )
         cv2.imshow("DualKey Realtime Feed", display)
         cv2.waitKey(1)
 
