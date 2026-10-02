@@ -11,6 +11,7 @@ Reference: DOC-03-FACE (docs/03-design/face-recognition.md)
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -37,18 +38,39 @@ class HaarFaceDetector:
         scale_factor: float = 1.1,
         min_neighbors: int = 5,
         min_size: tuple[int, int] = (60, 60),
+        cascade_path: str | None = None,
     ) -> None:
-        cascade_path: str = str(cv2.data.haarcascades) + "haarcascade_frontalface_default.xml"  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownArgumentType]
-        self._classifier = cv2.CascadeClassifier(cascade_path)
+        resolved_path = self._resolve_cascade_path(cascade_path)
+        self._classifier = cv2.CascadeClassifier(resolved_path)
 
         if self._classifier.empty():
-            msg = f"Failed to load Haar cascade from: {cascade_path}"
+            msg = f"Failed to load Haar cascade from: {resolved_path}"
             raise RuntimeError(msg)
 
         self._scale_factor = scale_factor
         self._min_neighbors = min_neighbors
         self._min_size = min_size
-        logger.info("Haar detector loaded: %s", cascade_path)
+        logger.info("Haar detector loaded: %s", resolved_path)
+
+    @staticmethod
+    def _resolve_cascade_path(custom_path: str | None) -> str:
+        """Resolve the haarcascade_frontalface_default.xml path from candidate locations."""
+        if custom_path and Path(custom_path).exists():
+            return custom_path
+
+        candidates = [
+            "models/lbph/haarcascade_frontalface_default.xml",
+            str(cv2.data.haarcascades) + "haarcascade_frontalface_default.xml",  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownArgumentType]
+            "/usr/share/opencv4/haarcascades/haarcascade_frontalface_default.xml",
+            "/usr/share/opencv/haarcascades/haarcascade_frontalface_default.xml",
+        ]
+
+        for path in candidates:
+            if Path(path).exists():
+                return path
+
+        # Fallback to cv2 data path string if none found on disk
+        return str(cv2.data.haarcascades) + "haarcascade_frontalface_default.xml"  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownArgumentType]
 
     def detect(self, frame: NDArray[np.uint8]) -> list[DetectedFace]:
         """Detect faces in a BGR or grayscale frame.
