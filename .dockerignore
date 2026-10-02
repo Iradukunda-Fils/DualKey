@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.git/
+.pytest_cache/
+htmlcov/
+.coverage
+data/app.db*
+data/faces/*
+data/logs/*
+firmware/.pio/

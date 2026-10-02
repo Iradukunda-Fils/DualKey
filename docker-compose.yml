@@ -1,0 +1,36 @@
+services:
+  dualkey:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dualkey
+    privileged: true
+    network_mode: host
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+    devices:
+      - /dev/video0:/dev/video0
+      - /dev/ttyUSB0:/dev/ttyUSB0
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: ["--run", "--model", "lbph"]
+
+  dualkey-enroll:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dualkey-enroll
+    privileged: true
+    interactive: true
+    tty: true
+    network_mode: host
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+    devices:
+      - /dev/video0:/dev/video0
+      - /dev/ttyUSB0:/dev/ttyUSB0
+    environment:
+      - PYTHONUNBUFFERED=1
+    entrypoint: ["dualkey", "--enroll"]
