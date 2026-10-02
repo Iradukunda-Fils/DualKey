@@ -287,6 +287,19 @@ class AccessController:
 
         banner = f"DualKey | State: {self._state.value} | Deadline: {remaining:.1f}s"
         cv2.putText(display, banner, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+
+        if not detected_faces:
+            sub = "Searching for face... (look directly at camera)"
+            cv2.putText(display, sub, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 165, 255), 2)
+        else:
+            matches = self._session.match_count if self._session else 0
+            has_dist = biometric is not None and biometric.distance != float("inf")
+            dist = f"{biometric.distance:.1f}" if (biometric is not None and has_dist) else "N/A"
+            color = (0, 255, 0) if is_owner else (0, 0, 255)
+            req = self._config.required_consistent_matches
+            sub = f"Consistent Matches: {matches}/{req} | Score: {dist}"
+            cv2.putText(display, sub, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
         cv2.imshow("DualKey Realtime Feed", display)
         cv2.waitKey(1)
 

@@ -36,8 +36,8 @@ class HaarFaceDetector:
     def __init__(
         self,
         scale_factor: float = 1.1,
-        min_neighbors: int = 5,
-        min_size: tuple[int, int] = (60, 60),
+        min_neighbors: int = 4,
+        min_size: tuple[int, int] = (30, 30),
         cascade_path: str | None = None,
     ) -> None:
         resolved_path = self._resolve_cascade_path(cascade_path)
