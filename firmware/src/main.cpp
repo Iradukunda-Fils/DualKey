@@ -148,7 +148,8 @@ void loop() {
 
 void initHardware() {
     // Servo PWM via LEDC
-    ledcAttach(SERVO_PIN, SERVO_FREQ, SERVO_RESOLUTION);
+    ledcSetup(SERVO_CHANNEL, SERVO_FREQ, SERVO_RESOLUTION);
+    ledcAttachPin(SERVO_PIN, SERVO_CHANNEL);
 
     // Indicator LEDs
     pinMode(GREEN_LED_PIN, OUTPUT);
@@ -165,11 +166,11 @@ void initHardware() {
 // ── Servo Control ───────────────────────────────────────────────────
 
 void setServoLocked() {
-    ledcWrite(SERVO_PIN, SERVO_LOCKED);
+    ledcWrite(SERVO_CHANNEL, SERVO_LOCKED);
 }
 
 void setServoOpen() {
-    ledcWrite(SERVO_PIN, SERVO_OPEN);
+    ledcWrite(SERVO_CHANNEL, SERVO_OPEN);
 }
 
 // ── Indicator Control ───────────────────────────────────────────────

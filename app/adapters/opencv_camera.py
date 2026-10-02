@@ -32,15 +32,27 @@ class OpenCVCameraAdapter:
     def open(self) -> None:
         """Initialize and open the video capture device.
 
+        Tries the specified camera_index first. If that fails, auto-probes
+        indices 0..5 to locate an active video capture device.
+
         Raises:
-            RuntimeError: If the camera device cannot be opened.
+            RuntimeError: If no working camera device can be opened.
         """
-        self._capture = cv2.VideoCapture(self._camera_index)
-        if not self._capture.isOpened():
-            self._capture = None
-            msg = f"Failed to open camera at index {self._camera_index}"
-            raise RuntimeError(msg)
-        logger.info("Camera opened: index=%d", self._camera_index)
+        candidate_indices = [self._camera_index] + [i for i in range(6) if i != self._camera_index]
+        for idx in candidate_indices:
+            cap = cv2.VideoCapture(idx)
+            if cap.isOpened():
+                ret, frame = cap.read()
+                if ret and frame is not None:
+                    self._capture = cap
+                    self._camera_index = idx
+                    logger.info("Camera opened: index=%d", self._camera_index)
+                    return
+                cap.release()
+
+        self._capture = None
+        msg = f"Failed to open any working camera (tested indices {candidate_indices[:4]})"
+        raise RuntimeError(msg)
 
     def read(self) -> NDArray[np.uint8] | None:
         """Capture and return the latest BGR video frame.
