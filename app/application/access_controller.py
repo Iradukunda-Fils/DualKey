@@ -15,6 +15,9 @@ from __future__ import annotations
 import logging
 import uuid
 
+import numpy as np
+from numpy.typing import NDArray
+
 from app.application.event_logger import EventLogger
 from app.application.health_service import HealthService
 from app.domain.decisions import (
@@ -62,6 +65,7 @@ class AccessController:
         clock: ClockPort,
         event_logger: EventLogger,
         health_service: HealthService,
+        show_preview: bool = False,
     ) -> None:
         self._config = config
         self._identity_repo = identity_repo
@@ -72,6 +76,7 @@ class AccessController:
         self._clock = clock
         self._event_logger = event_logger
         self._health = health_service
+        self._show_preview = show_preview
 
         self._state = SessionState.IDLE
         self._session: AccessSession | None = None
@@ -174,13 +179,14 @@ class AccessController:
             return
 
         # Acquire frame
+        detected_faces: list[DetectedFace] = []
         frame = self._camera.read()
         if frame is None:
             # Camera failure -- evaluate with no biometric
             biometric: BiometricFrameResult | None = None
         else:
             # Detect faces
-            detected_faces: list[DetectedFace] = self._detector.detect(frame)
+            detected_faces = self._detector.detect(frame)
             face_count = len(detected_faces)
 
             if face_count == 0:
@@ -233,6 +239,10 @@ class AccessController:
             required_matches=self._config.required_consistent_matches,
         )
 
+        # Render real-time visual preview window if enabled
+        if self._show_preview and frame is not None:
+            self._render_preview(frame, detected_faces, biometric, now)
+
         # Log audit event
         self._event_logger.log_decision(decision, self._session.card_uid)
 
@@ -243,6 +253,39 @@ class AccessController:
             self._deny_and_reset(self._session.card_uid, decision.reason)
 
         # CONTINUE: keep scanning (do nothing, next tick will evaluate again)
+
+    def _render_preview(
+        self,
+        frame: NDArray[np.uint8],
+        detected_faces: list[DetectedFace],
+        biometric: BiometricFrameResult | None,
+        now: float,
+    ) -> None:
+        """Render real-time GUI window with face bounding boxes and status."""
+        import cv2
+        display = frame.copy()
+        remaining = max(0.0, self._session.deadline - now) if self._session else 0.0
+
+        is_owner = (
+            biometric is not None
+            and self._session is not None
+            and biometric.recognized_person_id == self._session.expected_person_id
+        )
+        box_color = (0, 255, 0) if is_owner else (0, 0, 255)
+
+        for face in detected_faces:
+            x, y, w, h = face.bbox
+            cv2.rectangle(display, (x, y), (x + w, y + h), box_color, 2)
+            has_id = biometric and biometric.recognized_person_id
+            lbl = f"ID: {biometric.recognized_person_id}" if has_id else "Unknown"  # type: ignore[union-attr]
+            cv2.putText(
+                display, lbl, (x, max(20, y - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.6, box_color, 2
+            )
+
+        banner = f"DualKey | State: {self._state.value} | Deadline: {remaining:.1f}s"
+        cv2.putText(display, banner, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+        cv2.imshow("DualKey Realtime Feed", display)
+        cv2.waitKey(1)
 
     def _grant_access(self) -> None:
         """Command the door to open and transition to GRANTED."""

@@ -70,6 +70,12 @@ def main() -> None:
         help="Face recognition backend",
     )
     parser.add_argument(
+        "--preview",
+        action="store_true",
+        default=False,
+        help="Display real-time visual camera feed with bounding boxes",
+    )
+    parser.add_argument(
         "--log-level",
         type=str,
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
@@ -169,6 +175,7 @@ def _run_access_loop(config: SystemConfig, args: argparse.Namespace) -> None:
         clock=clock,
         event_logger=event_logger,
         health_service=health_service,
+        show_preview=args.preview,
     )
 
     # Graceful shutdown
