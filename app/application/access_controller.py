@@ -265,7 +265,6 @@ class AccessController:
         now: float,
     ) -> None:
         """Render real-time GUI window with face bounding boxes and status."""
-        import cv2
         display = frame.copy()
         remaining = max(0.0, self._session.deadline - now) if self._session else 0.0
 
@@ -304,18 +303,41 @@ class AccessController:
         cv2.waitKey(1)
 
     def _render_idle_preview(self) -> None:
-        """Render real-time video feed in IDLE state with instructions."""
+        """Render real-time video feed in IDLE state with face alignment feedback."""
+
         frame = self._camera.read()
         if frame is None:
             return
         display = frame.copy()
+
+        # Pre-detect faces in IDLE so the user can align their face before/while tapping card
+        detected = self._detector.detect(frame)
+        if detected:
+            for face in detected:
+                x, y, w, h = face.bbox
+                cv2.rectangle(display, (x, y), (x + w, y + h), (255, 255, 0), 2)
+                cv2.putText(
+                    display,
+                    "Face Aligned - Tap Card",
+                    (x, max(20, y - 10)),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.55,
+                    (255, 255, 0),
+                    2,
+                )
+            banner = "DualKey | IDLE: Face Aligned -- Tap RFID Card to Enter"
+            banner_color = (0, 255, 200)
+        else:
+            banner = "DualKey | IDLE: Stand in front of camera & Tap RFID Card"
+            banner_color = (0, 255, 255)
+
         cv2.putText(
             display,
-            "DualKey | State: IDLE - Tap RFID Card",
+            banner,
             (10, 30),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.6,
-            (0, 255, 255),
+            banner_color,
             2,
         )
         cv2.imshow("DualKey Realtime Feed", display)
@@ -328,6 +350,25 @@ class AccessController:
 
         self._state = SessionState.GRANTED
         logger.info("ACCESS GRANTED for session %s", self._session.session_id)
+
+        if self._show_preview:
+            import cv2
+
+            frame = self._camera.read()
+            if frame is not None:
+                display = frame.copy()
+                cv2.rectangle(display, (0, 0), (display.shape[1], 70), (0, 180, 0), -1)
+                cv2.putText(
+                    display,
+                    "ACCESS GRANTED -- UNLOCKING DOOR",
+                    (15, 45),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.8,
+                    (255, 255, 255),
+                    2,
+                )
+                cv2.imshow("DualKey Realtime Feed", display)
+                cv2.waitKey(30)
 
         command = DeviceCommand(
             command_id=str(uuid.uuid4()),
@@ -352,6 +393,25 @@ class AccessController:
 
         self._state = SessionState.DENIED
         logger.info("ACCESS DENIED: %s (card=%s)", reason.value, card_uid)
+
+        if self._show_preview:
+            import cv2
+
+            frame = self._camera.read()
+            if frame is not None:
+                display = frame.copy()
+                cv2.rectangle(display, (0, 0), (display.shape[1], 70), (0, 0, 200), -1)
+                cv2.putText(
+                    display,
+                    f"ACCESS DENIED: {reason.value}",
+                    (15, 45),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (255, 255, 255),
+                    2,
+                )
+                cv2.imshow("DualKey Realtime Feed", display)
+                cv2.waitKey(30)
 
         command = DeviceCommand(
             command_id=str(uuid.uuid4()),

@@ -145,7 +145,7 @@ void loop() {
 // ── Hardware Initialization ─────────────────────────────────────────
 
 void initHardware() {
-    // Servo PWM via LEDC
+    // Servo PWM via LEDC Channel 0
     ledcSetup(SERVO_CHANNEL, SERVO_FREQ, SERVO_RESOLUTION);
     ledcAttachPin(SERVO_PIN, SERVO_CHANNEL);
 
@@ -153,12 +153,24 @@ void initHardware() {
     pinMode(GREEN_LED_PIN, OUTPUT);
     pinMode(RED_LED_PIN, OUTPUT);
 
-    // Buzzer
-    pinMode(BUZZER_PIN, OUTPUT);
+    // Buzzer PWM via LEDC Channel 1 (works with both active DC buzzers & passive piezo buzzers)
+    ledcSetup(BUZZER_CHANNEL, BUZZER_FREQ, BUZZER_RES);
+    ledcAttachPin(BUZZER_PIN, BUZZER_CHANNEL);
+    ledcWrite(BUZZER_CHANNEL, 0);
 
     // Start in safe state
     setServoLocked();
     clearIndicators();
+}
+
+// ── Buzzer Tone Control ─────────────────────────────────────────────
+
+void buzzerOn() {
+    ledcWrite(BUZZER_CHANNEL, 128); // 50% duty cycle 2.7kHz acoustic tone
+}
+
+void buzzerOff() {
+    ledcWrite(BUZZER_CHANNEL, 0);   // Silence buzzer
 }
 
 // ── Servo Control ───────────────────────────────────────────────────
@@ -176,26 +188,26 @@ void setServoOpen() {
 void clearIndicators() {
     digitalWrite(GREEN_LED_PIN, LOW);
     digitalWrite(RED_LED_PIN, LOW);
-    digitalWrite(BUZZER_PIN, LOW);
+    buzzerOff();
 }
 
 void setGrantIndicators() {
     digitalWrite(GREEN_LED_PIN, HIGH);
     digitalWrite(RED_LED_PIN, LOW);
-    // Two short beeps
-    digitalWrite(BUZZER_PIN, HIGH);
-    delay(100);
-    digitalWrite(BUZZER_PIN, LOW);
-    delay(100);
-    digitalWrite(BUZZER_PIN, HIGH);
-    delay(100);
-    digitalWrite(BUZZER_PIN, LOW);
+    // Two crisp, cheerful confirmation beeps
+    buzzerOn();
+    delay(80);
+    buzzerOff();
+    delay(60);
+    buzzerOn();
+    delay(80);
+    buzzerOff();
 }
 
 void setDenyIndicators() {
     digitalWrite(GREEN_LED_PIN, LOW);
     digitalWrite(RED_LED_PIN, HIGH);
-    digitalWrite(BUZZER_PIN, HIGH);
+    buzzerOn();
 }
 
 // ── RFID Polling ────────────────────────────────────────────────────
@@ -217,12 +229,10 @@ void pollRfid() {
     g_eventCounter++;
     String eventId = String("rfid-") + String(g_eventCounter);
 
-    // Instant hardware feedback on card touch
-    digitalWrite(GREEN_LED_PIN, HIGH);
-    digitalWrite(BUZZER_PIN, HIGH);
-    delay(40);
-    digitalWrite(BUZZER_PIN, LOW);
-    digitalWrite(GREEN_LED_PIN, LOW);
+    // Fast acoustic chirp on card contact (strictly NO LED change)
+    buzzerOn();
+    delay(25);
+    buzzerOff();
 
     sendRfidDetected(uid, eventId);
 

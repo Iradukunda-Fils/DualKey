@@ -30,7 +30,7 @@ def load_config() -> SystemConfig:
         verification_window_s=_float_env("DUALKEY_WINDOW_SEC", 10.0),
         door_hold_s=_float_env("DUALKEY_HOLD_SEC", 3.0),
         required_consistent_matches=_int_env("DUALKEY_MATCH_COUNT", 3),
-        lbph_threshold=_float_env("DUALKEY_LBPH_THRESHOLD", 65.0),
+        lbph_threshold=_float_env("DUALKEY_LBPH_THRESHOLD", 75.0),
         sface_threshold=_float_env("DUALKEY_SFACE_THRESHOLD", 0.363),
         camera_index=_int_env("DUALKEY_CAMERA_INDEX", 0),
         serial_port=os.environ.get("DUALKEY_SERIAL_PORT", "/dev/ttyUSB0"),

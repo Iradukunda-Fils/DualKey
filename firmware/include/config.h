@@ -57,8 +57,11 @@
 #define GREEN_LED_PIN  26  // Access Granted indicator pin (GPIO 26)
 #define RED_LED_PIN    27  // Access Denied / Error indicator pin (GPIO 27)
 
-// ── Audible Feedback Buzzer Pin ──────────────────────────────────────
-#define BUZZER_PIN     32  // Active 5V Buzzer pin (GPIO 32)
+// ── Audible Feedback Buzzer Pin & PWM Configuration ─────────────────
+#define BUZZER_PIN       32  // Buzzer pin (GPIO 32)
+#define BUZZER_CHANNEL    1  // ESP32 LEDC PWM channel 1 (independent from Servo on channel 0)
+#define BUZZER_FREQ    2700  // 2.7 kHz resonant tone for piezo/passive buzzers
+#define BUZZER_RES        8  // 8-bit PWM resolution (0-255)
 
 // ── Serial Link & Timing Constants ───────────────────────────────────
 #ifndef SERIAL_BAUD
@@ -66,7 +69,7 @@
 #endif
 
 #ifndef RFID_POLL_INTERVAL_MS
-#define RFID_POLL_INTERVAL_MS  200 // Poll MFRC522 every 200ms when idle
+#define RFID_POLL_INTERVAL_MS   50 // Fast 50ms (20 Hz) polling for instant card detection
 #endif
 
 #ifndef DOOR_HOLD_MS
@@ -74,7 +77,7 @@
 #endif
 
 #ifndef DENY_BUZZ_MS
-#define DENY_BUZZ_MS     1500 // Access denied red LED & buzzer duration (1.5 seconds)
+#define DENY_BUZZ_MS      800 // Access denied red LED & buzzer duration (0.8s for snappy recovery)
 #endif
 
 #define HEARTBEAT_INTERVAL_MS  1000 // Send heartbeat telemetry every 1.0 second
