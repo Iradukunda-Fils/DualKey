@@ -223,10 +223,12 @@ def _run_enrollment(config: SystemConfig, args: argparse.Namespace) -> None:
             while time.time() < deadline:
                 events = transport.poll()
                 for ev in events:
-                    if ev.event_type == "rfid_detected" and "card_uid" in ev.payload:
-                        card_uid = str(ev.payload["card_uid"]).upper()
-                        print(f"[SUCCESS] Scanned Card UID: {card_uid}")
-                        break
+                    if ev.event_type == "rfid_detected":
+                        raw_uid = ev.payload.get("uid") or ev.payload.get("card_uid")
+                        if raw_uid:
+                            card_uid = str(raw_uid).upper()
+                            print(f"[SUCCESS] Scanned Card UID: {card_uid}")
+                            break
                 if card_uid:
                     break
                 time.sleep(0.05)
