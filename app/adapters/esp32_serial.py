@@ -46,13 +46,71 @@ class Esp32SerialAdapter:
         self._last_executed_id: str | None = None
 
     def open(self) -> None:
-        """Open the serial connection to the ESP32."""
-        self._serial = serial.Serial(
-            port=self._port,
-            baudrate=self._baud,
-            timeout=self._timeout,
-        )
-        logger.info("Serial connection opened: %s @ %d baud", self._port, self._baud)
+        """Open the serial connection to the ESP32.
+
+        Attempts to open the configured port first. If port is 'auto' or opening
+        fails due to device name mismatch (e.g. /dev/ttyACM0 vs /dev/ttyUSB0),
+        automatically scans system ports for active USB-to-UART devices.
+        """
+        resolved_port = self._resolve_port(self._port)
+        try:
+            self._serial = serial.Serial(
+                port=resolved_port,
+                baudrate=self._baud,
+                timeout=self._timeout,
+            )
+            self._port = resolved_port
+            logger.info("Serial connection opened: %s @ %d baud", self._port, self._baud)
+        except (serial.SerialException, FileNotFoundError) as err:
+            logger.warning(
+                "Failed to open primary port %s (%s) -- attempting auto-discovery",
+                self._port,
+                err,
+            )
+            fallback_port = self._auto_discover_port()
+            if fallback_port and fallback_port != resolved_port:
+                self._serial = serial.Serial(
+                    port=fallback_port,
+                    baudrate=self._baud,
+                    timeout=self._timeout,
+                )
+                self._port = fallback_port
+                logger.info(
+                    "Auto-discovered serial connection opened: %s @ %d baud",
+                    self._port,
+                    self._baud,
+                )
+            else:
+                raise
+
+    @staticmethod
+    def _resolve_port(configured_port: str) -> str:
+        """Resolve port string, performing auto-discovery if set to 'auto'."""
+        if configured_port.lower() == "auto":
+            discovered = Esp32SerialAdapter._auto_discover_port()
+            return discovered if discovered else "/dev/ttyUSB0"
+        return configured_port
+
+    @staticmethod
+    def _auto_discover_port() -> str | None:
+        """Scan system for connected ESP32 USB-to-UART serial ports."""
+        try:
+            import serial.tools.list_ports
+            ports = list(serial.tools.list_ports.comports())
+            for p in ports:
+                # Common patterns (Linux: ttyUSB/ttyACM, macOS: cu.usbserial, Win: COM)
+                dev = p.device
+                desc = (p.description or "").lower()
+                hwid = (p.hwid or "").lower()
+                if any(k in dev for k in ("ttyUSB", "ttyACM", "usbserial", "COM")) or \
+                   any(k in desc or k in hwid for k in ("cp210", "ch340", "ftdi", "esp32", "uart")):
+                    logger.info(
+                        "Discovered USB serial device candidate: %s (%s)", dev, p.description
+                    )
+                    return dev
+        except Exception as e:
+            logger.debug("Serial auto-discovery failed: %s", e)
+        return None
 
     def close(self) -> None:
         """Close the serial connection and clear the buffer."""
